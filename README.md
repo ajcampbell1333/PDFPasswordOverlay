@@ -34,16 +34,57 @@ npm start
 
 ## How to Use
 
-1. The app will load with a password overlay covering the "PDF content"
-2. Enter the password: `secret123`
+1. The app will load with a password overlay covering the PDF content
+2. Enter the password: `[YOUR_PASSWORD_HERE]`
 3. Press Enter or click the "Enter" button
-4. Watch the overlay animate upward to reveal the protected content
+4. Watch the overlay animate upward to reveal the protected PDF
 
 ## Customization
 
+### Setting Your Own Password
 - **Change Password**: Modify the `CORRECT_PASSWORD` constant in `src/App.js`
+
+### Adding Your Own PDF File
+
+1. **Place your PDF in the public folder**:
+   ```bash
+   # Copy your PDF file to the public directory
+   cp your-document.pdf public/
+   ```
+
+2. **Generate an obfuscated URL**:
+   ```bash
+   # Run the helper script to create an obfuscated URL
+   node scripts/generateObfuscatedUrl.js "your-document.pdf"
+   ```
+
+3. **Update App.js with the obfuscated URL**:
+   ```javascript
+   // In src/App.js, replace the OBFUSCATED_PDF_URL constant
+   const OBFUSCATED_PDF_URL = 'YOUR_GENERATED_OBFUSCATED_STRING_HERE';
+   ```
+
+4. **Restart the development server**:
+   ```bash
+   npm start
+   ```
+
+### Example Workflow
+```bash
+# 1. Add your PDF to public folder
+cp resume.pdf public/
+
+# 2. Generate obfuscated URL
+node scripts/generateObfuscatedUrl.js "resume.pdf"
+
+# 3. Copy the encrypted string and update src/App.js
+# 4. Restart the app
+npm start
+```
+
+### Other Customizations
 - **Styling**: Edit `src/App.css` to customize colors, animations, and layout
-- **Content**: Replace the placeholder PDF content with your actual PDF viewer component
+- **Security**: Modify the encryption key in `src/utils/urlObfuscator.js` for enhanced security
 
 ## Available Scripts
 
