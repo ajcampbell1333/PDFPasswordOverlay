@@ -6,7 +6,7 @@ import { deobfuscateUrl } from './utils/urlObfuscator';
 
 function App() {
   // Simple password constant - you can change this to any string you want
-  const CORRECT_PASSWORD = 'ed';
+  const CORRECT_PASSWORD = 'ed'; // would auth server-side in production
   
   // Obfuscated PDF URL - change this to your actual obfuscated PDF file URL
   // To generate a new obfuscated URL, use: node scripts/generateObfuscatedUrl.js "your-pdf-filename.pdf"
