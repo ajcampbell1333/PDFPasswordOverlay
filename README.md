@@ -1,6 +1,10 @@
 # PDF Password Overlay React App
 
-A simple React application that demonstrates a password-protected PDF viewer with an animated overlay interface.
+A simple React application that demonstrates a password-protected PDF viewer with an animated overlay interface. This app can serve PDFs locally or integrate with a secure Docker-based PDF server for enhanced security.
+
+## Related Project
+
+This app works seamlessly with the [PDF Password Server](https://github.com/ajcampbell1333/PDFPasswordServer) for secure, server-side PDF hosting with JWT authentication. See the **Server Integration** section below for setup instructions.
 
 ## Features
 
@@ -10,6 +14,8 @@ A simple React application that demonstrates a password-protected PDF viewer wit
 - **Keyboard Support**: Press Enter key to submit password
 - **Error Handling**: Visual feedback for incorrect passwords
 - **Auto-focus**: Password field automatically focused on page load
+- **Dual Mode**: Serve PDFs locally or via secure Docker server
+- **JWT Authentication**: Integrates with server-side authentication for enhanced security
 
 ## Getting Started
 
@@ -86,10 +92,121 @@ npm start
 - **Styling**: Edit `src/App.css` to customize colors, animations, and layout
 - **Security**: Modify the encryption key in `src/utils/urlObfuscator.js` for enhanced security
 
+### Configuring Production Subdirectory
+
+If deploying to a subdirectory (e.g., `https://yourdomain.com/my-app/`):
+
+1. **Update `productionSubdirectory` in `src/App.js`**:
+   ```javascript
+   const productionSubdirectory = 'my-app'; // Change to your subdirectory name
+   ```
+
+2. **Update `homepage` in `package.json`**:
+   ```json
+   "homepage": "/my-app/"
+   ```
+
+3. **Rebuild the app**:
+   ```bash
+   npm run build
+   ```
+
+## Server Integration
+
+### Option 1: Local PDF Files (Default)
+
+Set `serverHostedPDF = false` in `src/App.js` to serve PDFs from the `public/` folder.
+
+### Option 2: Docker-Hosted PDFs (Recommended for Production)
+
+For enhanced security, use the [PDF Password Server](https://github.com/ajcampbell1333/PDFPasswordServer):
+
+1. **Deploy the PDF Password Server** (see server repo for instructions)
+
+2. **Configure the React app in `src/App.js`**:
+   ```javascript
+   const serverHostedPDF = true;
+   const DOCKER_SERVER_URL = 'https://your-cloud-run-service-url.run.app';
+   const PDF_FILENAME = 'your-document.pdf';
+   ```
+
+3. **Rebuild and deploy**:
+   ```bash
+   npm run build
+   ```
+
+The app will automatically:
+- Authenticate with the server using the password
+- Receive a JWT token
+- Load the PDF with the token for secure access
+
+## Deployment
+
+### Deploy to Staging
+
+1. **Configure for staging** in `src/App.js`:
+   ```javascript
+   const productionSubdirectory = 'my-app/stage';
+   ```
+
+2. **Update `package.json`**:
+   ```json
+   "homepage": "/my-app/stage/"
+   ```
+
+3. **Build for staging**:
+   ```bash
+   npm run build
+   ```
+
+4. **Upload** the `build/` folder contents to your staging subdirectory on your web server (e.g., cPanel, FTP, etc.)
+
+### Deploy to Production
+
+1. **Configure for production** in `src/App.js`:
+   ```javascript
+   const productionSubdirectory = 'my-app';
+   const CORRECT_PASSWORD = 'your-production-password';
+   const DOCKER_SERVER_URL = 'https://your-production-server.run.app';
+   const PDF_FILENAME = 'your-production-document.pdf';
+   ```
+
+2. **Update `package.json`**:
+   ```json
+   "homepage": "/my-app/"
+   ```
+
+3. **Build for production**:
+   ```bash
+   npm run build
+   ```
+
+4. **Upload** the `build/` folder contents to your production directory
+
+### Deploy to Root Domain
+
+If deploying to the root of your domain (e.g., `https://yourdomain.com/`):
+
+1. **Remove subdirectory references** in `src/App.js`:
+   ```javascript
+   const productionSubdirectory = '';
+   ```
+
+2. **Remove `homepage` from `package.json`** or set it to `"/"`:
+   ```json
+   "homepage": "/"
+   ```
+
+3. **Build and deploy**:
+   ```bash
+   npm run build
+   ```
+
 ## Available Scripts
 
 - `npm start` - Runs the app in development mode
 - `npm run build` - Builds the app for production
+- `npm run build:localhost` - Builds with relative paths for local testing
 - `npm test` - Launches the test runner
 - `npm run eject` - Ejects from Create React App (one-way operation)
 
@@ -98,7 +215,46 @@ npm start
 - React 18
 - CSS3 with modern features (backdrop-filter, gradients, animations)
 - Create React App for project setup
+- JWT Authentication (when using Docker server)
+- Fetch API for server communication
 
 ## Browser Support
 
-This app uses modern CSS features and may not work in older browsers. For production use, consider adding appropriate polyfills or fallbacks. 
+This app uses modern CSS features and may not work in older browsers. For production use, consider adding appropriate polyfills or fallbacks.
+
+## Security Considerations
+
+### Local PDF Serving
+- PDFs are publicly accessible in the `public/` folder
+- URL obfuscation provides minimal security (client-side only)
+- Suitable for low-security use cases
+
+### Server-Hosted PDFs (Recommended)
+- PDFs are stored securely on the server
+- JWT authentication with 1-hour expiration
+- Rate limiting prevents abuse
+- CORS protection limits access to your domain
+- Suitable for sensitive documents
+
+For maximum security, always use the [PDF Password Server](https://github.com/ajcampbell1333/PDFPasswordServer).
+
+## Troubleshooting
+
+### Blank White Screen After Deployment
+- Ensure `homepage` in `package.json` matches your deployment path
+- Check browser console for 404 errors on CSS/JS files
+- Verify `productionSubdirectory` in `App.js` matches your server path
+
+### PDF Not Loading
+- Check that the PDF filename matches exactly (case-sensitive)
+- Verify the Docker server URL is correct and accessible
+- Check browser console for CORS or authentication errors
+- Ensure the password matches between client and server
+
+### Clear Browser Cache
+After deployment, users may need to clear their cache:
+- Chrome/Edge: `Ctrl+Shift+Delete` (Windows) or `Cmd+Shift+Delete` (Mac)
+- Firefox: `Ctrl+Shift+Delete` (Windows) or `Cmd+Shift+Delete` (Mac)
+- Safari: `Cmd+Option+E` (Mac)
+
+Or use hard refresh: `Ctrl+F5` (Windows) or `Cmd+Shift+R` (Mac) 

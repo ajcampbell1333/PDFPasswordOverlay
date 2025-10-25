@@ -1,22 +1,57 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PasswordOverlay from './PasswordOverlay';
 
-function AuthenticatedPasswordOverlay({ correctPassword, children }) {
+function AuthenticatedPasswordOverlay({ correctPassword, serverHostedPDF, dockerServerUrl, onTokenReceived, children }) {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [error, setError] = useState('');
   const passwordInputRef = useRef(null);
 
-  const handlePasswordSubmit = () => {
+  const handlePasswordSubmit = async () => {
     if (password === correctPassword) {
       setError('');
       setIsAnimating(true);
-      // Wait for animation to complete before setting authenticated
-      setTimeout(() => {
-        setIsAuthenticated(true);
-        setIsAnimating(false);
-      }, 500);
+      
+      // If using server-hosted PDF, authenticate with Docker server first
+      if (serverHostedPDF && dockerServerUrl) {
+        try {
+          const response = await fetch(`${dockerServerUrl}/auth`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ password: password }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            onTokenReceived(data.token);
+            
+            // Wait for animation to complete before setting authenticated
+            setTimeout(() => {
+              setIsAuthenticated(true);
+              setIsAnimating(false);
+            }, 500);
+          } else {
+            setError('Authentication failed. Please try again.');
+            setPassword('');
+            setIsAnimating(false);
+            passwordInputRef.current?.focus();
+          }
+        } catch (err) {
+          setError('Unable to connect to server. Please try again.');
+          setPassword('');
+          setIsAnimating(false);
+          passwordInputRef.current?.focus();
+        }
+      } else {
+        // Local PDF - no server authentication needed
+        setTimeout(() => {
+          setIsAuthenticated(true);
+          setIsAnimating(false);
+        }, 500);
+      }
     } else {
       setError('Incorrect password. Please try again.');
       setPassword('');

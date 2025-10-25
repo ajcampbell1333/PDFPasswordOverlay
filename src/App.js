@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import PdfViewer from './components/PdfViewer';
 import AuthenticatedPasswordOverlay from './components/AuthenticatedPasswordOverlay';
@@ -6,19 +6,61 @@ import { deobfuscateUrl } from './utils/urlObfuscator';
 
 function App() {
   // Simple password constant - you can change this to any string you want
-  const CORRECT_PASSWORD = 'ed'; // would auth server-side in production
+  const CORRECT_PASSWORD = 'your-password-here'; // Change this to your desired password
+  
+  // Production subdirectory - change this if you deploy to a different subdirectory
+  const productionSubdirectory = 'your-subdirectory'; // Change this to your subdirectory name
+  
+  // Server configuration - set to true to use Docker server, false for local files
+  const serverHostedPDF = true; // Change this to false for local PDF files
+  
+  // Docker server configuration
+  const DOCKER_SERVER_URL = 'https://your-cloud-run-service-url.run.app'; // Change this to your Docker server URL
+  const PDF_FILENAME = 'your-document.pdf'; // Change this to your PDF filename
   
   // Obfuscated PDF URL - change this to your actual obfuscated PDF file URL
   // To generate a new obfuscated URL, use: node scripts/generateObfuscatedUrl.js "your-pdf-filename.pdf"
-  const OBFUSCATED_PDF_URL = 'MS5rPDIoMzAgODNmKDg8WllcVX0nKSk2N24+ICArLjd0PlxUH1cmajY7NQ=='; // Encrypted with XOR key
+  const OBFUSCATED_PDF_URL = 'IyUrLz8gbSIhMg=='; // Encrypted with XOR key
   
-  // Deobfuscate the URL at runtime
-  const PDF_URL = deobfuscateUrl(OBFUSCATED_PDF_URL) || '/sample.pdf';
+  // State for JWT token
+  const [jwtToken, setJwtToken] = useState(null);
+  
+  // Deobfuscate the URL at runtime and handle subdirectory paths
+  const deobfuscatedUrl = deobfuscateUrl(OBFUSCATED_PDF_URL);
+  
+  // Detect if we're on localhost and adjust paths accordingly
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
+  // Build the correct PDF URL based on environment and server configuration
+  let PDF_URL;
+  
+  if (serverHostedPDF) {
+    // Use Docker server for PDF serving - token will be added by PdfViewer
+    PDF_URL = `${DOCKER_SERVER_URL}/pdf/${PDF_FILENAME}`;
+  } else {
+    // Use local file serving (original behavior)
+    if (deobfuscatedUrl) {
+      // If we have a deobfuscated URL, prepend the subdirectory path for production
+      PDF_URL = isLocalhost ? `./${deobfuscatedUrl}` : `/${productionSubdirectory}/${deobfuscatedUrl}`;
+    } else {
+      // Fallback
+      PDF_URL = isLocalhost ? './sample.pdf' : `/${productionSubdirectory}/sample.pdf`;
+    }
+  }
 
   return (
     <div className="App">
-      <AuthenticatedPasswordOverlay correctPassword={CORRECT_PASSWORD}>
-        <PdfViewer pdfUrl={PDF_URL} />
+      <AuthenticatedPasswordOverlay 
+        correctPassword={CORRECT_PASSWORD}
+        serverHostedPDF={serverHostedPDF}
+        dockerServerUrl={DOCKER_SERVER_URL}
+        onTokenReceived={setJwtToken}
+      >
+        <PdfViewer 
+          pdfUrl={PDF_URL} 
+          jwtToken={jwtToken}
+          serverHostedPDF={serverHostedPDF}
+        />
       </AuthenticatedPasswordOverlay>
     </div>
   );
