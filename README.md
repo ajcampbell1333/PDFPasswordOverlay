@@ -31,12 +31,23 @@ This app works seamlessly with the [PDF Password Server](https://github.com/ajca
 npm install
 ```
 
-2. Start the development server:
+2. Copy the PDF.js worker file (required for PDF rendering):
+```bash
+# Windows PowerShell:
+Copy-Item "node_modules\pdfjs-dist\build\pdf.worker.mjs" -Destination "public\pdf.worker.mjs"
+
+# macOS/Linux:
+cp node_modules/pdfjs-dist/build/pdf.worker.mjs public/pdf.worker.mjs
+```
+
+3. Start the development server:
 ```bash
 npm start
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+4. Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+
+**Note:** The PDF.js worker file is excluded from git. You must copy it after running `npm install` on any fresh clone or new setup.
 
 ## How to Use
 
@@ -213,6 +224,7 @@ If deploying to the root of your domain (e.g., `https://yourdomain.com/`):
 ## Technologies Used
 
 - React 18
+- PDF.js (Mozilla's PDF rendering library)
 - CSS3 with modern features (backdrop-filter, gradients, animations)
 - Create React App for project setup
 - JWT Authentication (when using Docker server)
@@ -220,7 +232,13 @@ If deploying to the root of your domain (e.g., `https://yourdomain.com/`):
 
 ## Browser Support
 
-This app uses modern CSS features and may not work in older browsers. For production use, consider adding appropriate polyfills or fallbacks.
+This app uses PDF.js for PDF rendering, which provides excellent cross-browser support including:
+- ✅ Chrome/Edge (desktop and mobile)
+- ✅ Firefox (desktop and mobile)
+- ✅ Safari (desktop and iOS/iPadOS)
+- ✅ All modern browsers
+
+**Note:** The app uses modern CSS features (backdrop-filter, CSS Grid, Flexbox) which work in all modern browsers.
 
 ## Security Considerations
 
@@ -250,6 +268,7 @@ For maximum security, always use the [PDF Password Server](https://github.com/aj
 - Verify the Docker server URL is correct and accessible
 - Check browser console for CORS or authentication errors
 - Ensure the password matches between client and server
+- **If you see "Failed to load PDF" or worker errors**: Make sure you copied the PDF.js worker file (see Installation step 2)
 
 ### Clear Browser Cache
 After deployment, users may need to clear their cache:

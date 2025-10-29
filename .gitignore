@@ -19,6 +19,9 @@ dist/
 *.pdf
 public/*.pdf
 
+# PDF.js worker (downloaded from npm, don't commit)
+public/pdf.worker.mjs
+
 # IDE and editor files
 .vscode/
 .idea/

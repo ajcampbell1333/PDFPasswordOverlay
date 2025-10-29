@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "/your-subdirectory/",
   "dependencies": {
+    "pdfjs-dist": "^5.4.296",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1"
@@ -33,4 +34,4 @@
       "last 1 safari version"
     ]
   }
-} 
+}
