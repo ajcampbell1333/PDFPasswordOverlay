@@ -30,6 +30,30 @@
   background: white;
 }
 
+/* PNG Viewer Container (for iOS high-res mode) */
+.png-viewer-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+}
+
+.png-page {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0;
+  padding: 0;
+  /* Smooth rendering for high-res images */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
 /* Password Overlay */
 .password-overlay {
   position: absolute;

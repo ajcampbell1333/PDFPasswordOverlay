@@ -22,8 +22,9 @@ function App() {
   // To generate a new obfuscated URL, use: node scripts/generateObfuscatedUrl.js "your-pdf-filename.pdf"
   const OBFUSCATED_PDF_URL = 'IyUrLz8gbSIhMg=='; // Encrypted with XOR key
   
-  // State for JWT token
+  // State for JWT token and PNG mode
   const [jwtToken, setJwtToken] = useState(null);
+  const [pngMode, setPngMode] = useState(null); // { usePngMode: true, pngFiles: [...] }
   
   // Deobfuscate the URL at runtime and handle subdirectory paths
   const deobfuscatedUrl = deobfuscateUrl(OBFUSCATED_PDF_URL);
@@ -54,12 +55,16 @@ function App() {
         correctPassword={CORRECT_PASSWORD}
         serverHostedPDF={serverHostedPDF}
         dockerServerUrl={DOCKER_SERVER_URL}
+        pdfFilename={PDF_FILENAME}
         onTokenReceived={setJwtToken}
+        onPngModeReceived={setPngMode}
       >
         <PdfViewer 
           pdfUrl={PDF_URL} 
           jwtToken={jwtToken}
           serverHostedPDF={serverHostedPDF}
+          dockerServerUrl={DOCKER_SERVER_URL}
+          pngMode={pngMode}
         />
       </AuthenticatedPasswordOverlay>
     </div>

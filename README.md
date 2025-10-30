@@ -16,6 +16,41 @@ This app works seamlessly with the [PDF Password Server](https://github.com/ajca
 - **Auto-focus**: Password field automatically focused on page load
 - **Dual Mode**: Serve PDFs locally or via secure Docker server
 - **JWT Authentication**: Integrates with server-side authentication for enhanced security
+- **Cross-Platform Rendering**: Optimized viewing experience for all devices (see below)
+
+## PDF Rendering Modes
+
+This application uses three different rendering strategies depending on the device and server configuration:
+
+### Mode A: Native Browser PDF Viewer (Default for Desktop/Android)
+- **Platforms**: Desktop browsers (Chrome, Firefox, Edge, Safari) and Android devices
+- **Method**: PDF is displayed using the browser's native PDF viewer in an `<iframe>`
+- **Benefits**: Fast loading, native zoom/scroll controls, minimal JavaScript overhead
+- **Quality**: Native PDF rendering quality
+
+### Mode B: PDF.js Canvas Renderer (Default for iOS)
+- **Platforms**: iOS devices (iPad, iPhone) when server flag `SERVE_PNGS_FOR_IOS=false` (default)
+- **Method**: PDF is rendered to `<canvas>` elements using Mozilla's PDF.js library
+- **Why**: iOS Safari has limitations embedding PDFs in iframes, requiring client-side rendering
+- **Benefits**: Works on iOS, page preloading for instant navigation, fully scrollable
+- **Quality**: PDF.js applies some compression; quality is good but not lossless
+
+### Mode C: High-Resolution PNG Images (Optional for iOS)
+- **Platforms**: iOS devices (iPad, iPhone) when server flag `SERVE_PNGS_FOR_IOS=true`
+- **Method**: Server sends array of high-resolution PNG images, client renders as scrollable column
+- **Why**: Provides superior image quality compared to PDF.js compression
+- **Benefits**: Lossless image quality, smooth scrolling, lazy loading (first page eager, rest lazy)
+- **Drawbacks**: Larger file sizes, increased bandwidth usage
+- **Activation**: Requires PNG files in server's `pngs/` directory and `SERVE_PNGS_FOR_IOS=true` env var
+
+**How Mode Selection Works:**
+1. Client detects device type (iOS vs. other)
+2. Client sends device info to server during authentication
+3. Server responds with appropriate rendering instructions
+4. Client renders using the specified mode
+
+**To Enable PNG Mode for iOS:**
+- See the [PDF Password Server documentation](https://github.com/ajcampbell1333/PDFPasswordServer) for PNG export and deployment instructions
 
 ## Getting Started
 
@@ -224,21 +259,38 @@ If deploying to the root of your domain (e.g., `https://yourdomain.com/`):
 ## Technologies Used
 
 - React 18
-- PDF.js (Mozilla's PDF rendering library)
+- **PDF.js** (Mozilla's PDF rendering library - used for iOS devices in Mode B)
+- **Native Browser PDF Viewer** (iframe-based - used for desktop/Android in Mode A)
+- **High-Resolution PNG Rendering** (optional for iOS in Mode C)
 - CSS3 with modern features (backdrop-filter, gradients, animations)
 - Create React App for project setup
 - JWT Authentication (when using Docker server)
 - Fetch API for server communication
+- iOS device detection for optimal rendering strategy
 
-## Browser Support
+## Browser Support and Rendering
 
-This app uses PDF.js for PDF rendering, which provides excellent cross-browser support including:
-- ✅ Chrome/Edge (desktop and mobile)
-- ✅ Firefox (desktop and mobile)
-- ✅ Safari (desktop and iOS/iPadOS)
-- ✅ All modern browsers
+This app provides optimized viewing experiences across all platforms:
 
-**Note:** The app uses modern CSS features (backdrop-filter, CSS Grid, Flexbox) which work in all modern browsers.
+### Desktop Browsers (Mode A - Native PDF Viewer)
+- ✅ Chrome/Chromium - Fast native PDF rendering in iframe
+- ✅ Firefox - Fast native PDF rendering in iframe
+- ✅ Edge - Fast native PDF rendering in iframe
+- ✅ Safari (macOS) - Fast native PDF rendering in iframe
+
+### Mobile Browsers (Mode A/B/C - Adaptive Rendering)
+- ✅ Android Chrome/Firefox - Native browser PDF viewer (Mode A)
+- ✅ iOS Safari (iPad/iPhone) - PDF.js canvas renderer (Mode B) or PNG images (Mode C)
+
+### Rendering Strategy by Platform
+| Platform | Default Mode | Method | Quality |
+|----------|-------------|---------|---------|
+| Desktop (Chrome, Firefox, Edge, Safari) | Mode A | Native `<iframe>` | Native |
+| Android | Mode A | Native `<iframe>` | Native |
+| iOS (flag=false) | Mode B | PDF.js `<canvas>` | Good |
+| iOS (flag=true) | Mode C | PNG `<img>` sequence | Lossless |
+
+**Note:** The app uses modern CSS features (backdrop-filter, CSS Grid, Flexbox, 100dvh) which work in all modern browsers.
 
 ## Security Considerations
 

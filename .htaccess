@@ -1,3 +1,18 @@
+# Enable HSTS (HTTP Strict Transport Security)
+# Tells browsers to always use HTTPS for this domain
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+</IfModule>
+
+# Redirect all HTTP traffic to HTTPS
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # If HTTPS is off, redirect to HTTPS
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
 # Block PDF from search engines and crawlers
 <Files "MoT-Proposal.pdf">
     Header set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet"

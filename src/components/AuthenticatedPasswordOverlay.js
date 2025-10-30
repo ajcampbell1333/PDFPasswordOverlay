@@ -1,7 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PasswordOverlay from './PasswordOverlay';
 
-function AuthenticatedPasswordOverlay({ correctPassword, serverHostedPDF, dockerServerUrl, onTokenReceived, children }) {
+// iOS detection function
+const isIOS = () => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+function AuthenticatedPasswordOverlay({ correctPassword, serverHostedPDF, dockerServerUrl, pdfFilename, onTokenReceived, onPngModeReceived, children }) {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -21,12 +27,21 @@ function AuthenticatedPasswordOverlay({ correctPassword, serverHostedPDF, docker
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ password: password }),
+            body: JSON.stringify({ 
+              password: password,
+              isIOS: isIOS(),
+              pdfFilename: pdfFilename
+            }),
           });
 
           if (response.ok) {
             const data = await response.json();
             onTokenReceived(data.token);
+            
+            // Check if server wants us to use PNG mode
+            if (data.usePngMode && data.pngFiles) {
+              onPngModeReceived(data);
+            }
             
             // Wait for animation to complete before setting authenticated
             setTimeout(() => {

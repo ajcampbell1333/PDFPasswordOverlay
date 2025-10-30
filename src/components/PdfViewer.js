@@ -10,7 +10,7 @@ const isIOS = () => {
          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 };
 
-function PdfViewer({ pdfUrl, jwtToken, serverHostedPDF }) {
+function PdfViewer({ pdfUrl, jwtToken, serverHostedPDF, dockerServerUrl, pngMode }) {
   const useNativePDFViewer = !isIOS(); // Use native viewer on non-iOS devices
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -21,6 +21,10 @@ function PdfViewer({ pdfUrl, jwtToken, serverHostedPDF }) {
   const [pdfDoc, setPdfDoc] = useState(null);
   const renderedPagesRef = useRef({}); // Cache for prerendered pages
   const isPreloadingRef = useRef(false); // Prevent multiple simultaneous preload loops
+  
+  // PNG progressive loading state
+  const [loadedImages, setLoadedImages] = useState([0]); // Start with first image
+  const [failedImages, setFailedImages] = useState(new Set());
 
   // Build the final URL with JWT token
   const finalUrl = serverHostedPDF && jwtToken 
@@ -29,10 +33,13 @@ function PdfViewer({ pdfUrl, jwtToken, serverHostedPDF }) {
 
   // Don't render until we have a token (if using server-hosted PDF)
   const shouldRender = serverHostedPDF ? jwtToken : true;
+  
+  // Check if we're in PNG mode
+  const isPngMode = pngMode && pngMode.usePngMode && pngMode.pngFiles && pngMode.pngFiles.length > 0;
 
   // All hooks must be called before any conditional returns
   useEffect(() => {
-    if (useNativePDFViewer) return; // Skip PDF.js loading for native viewer
+    if (useNativePDFViewer || isPngMode) return; // Skip PDF.js loading for native viewer or PNG mode
     if (!shouldRender) return;
 
     const loadPdf = async () => {
@@ -58,7 +65,7 @@ function PdfViewer({ pdfUrl, jwtToken, serverHostedPDF }) {
 
   // Preload remaining pages in background (re-runs on page change)
   useEffect(() => {
-    if (useNativePDFViewer) return; // Skip for native viewer
+    if (useNativePDFViewer || isPngMode) return; // Skip for native viewer or PNG mode
     if (!pdfDoc || numPages === 0) return;
     if (isPreloadingRef.current) return; // Already preloading, don't start another loop
 
@@ -124,7 +131,7 @@ function PdfViewer({ pdfUrl, jwtToken, serverHostedPDF }) {
   }, [pdfDoc, numPages, pageNum]);
 
   useEffect(() => {
-    if (useNativePDFViewer) return; // Skip for native viewer
+    if (useNativePDFViewer || isPngMode) return; // Skip for native viewer or PNG mode
     if (!pdfDoc || !canvasRef.current || !containerRef.current) return;
 
     const renderPage = async () => {
@@ -175,6 +182,122 @@ function PdfViewer({ pdfUrl, jwtToken, serverHostedPDF }) {
 
     renderPage();
   }, [pdfDoc, pageNum, useNativePDFViewer]);
+
+  // PNG loading handlers
+  const handleImageLoad = (index) => {
+    console.log(`PNG ${index + 1} loaded successfully`);
+    // Load next image after this one finishes
+    if (isPngMode && index + 1 < pngMode.pngFiles.length && !loadedImages.includes(index + 1)) {
+      setLoadedImages(prev => [...prev, index + 1]);
+    }
+  };
+  
+  const handleImageError = (index) => {
+    console.error(`PNG ${index + 1} failed to load`);
+    setFailedImages(prev => new Set([...prev, index]));
+    // Try to load next image even if this one failed
+    if (isPngMode && index + 1 < pngMode.pngFiles.length && !loadedImages.includes(index + 1)) {
+      setLoadedImages(prev => [...prev, index + 1]);
+    }
+  };
+
+  // PNG Mode: Render high-res PNG images instead of PDF (for iOS with flag enabled)
+  if (isPngMode) {
+    
+    return (
+      <div className="pdf-background">
+        <div className="png-viewer-container">
+          {pngMode.pngFiles.map((filename, index) => {
+            const shouldLoad = loadedImages.includes(index);
+            const hasFailed = failedImages.has(index);
+            
+            if (!shouldLoad && !hasFailed) {
+              // Placeholder for images not yet loaded
+              return (
+                <React.Fragment key={filename}>
+                  <div 
+                    className="png-page-placeholder"
+                    style={{
+                      minHeight: '100vh',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: '#f5f5f5',
+                      color: '#666'
+                    }}
+                  >
+                    Loading page {index + 1}...
+                  </div>
+                  {index < pngMode.pngFiles.length - 1 && (
+                    <div style={{
+                      width: '100%',
+                      height: '3px',
+                      minHeight: '3px',
+                      backgroundColor: 'black',
+                      flexShrink: 0,
+                      display: 'block'
+                    }} />
+                  )}
+                </React.Fragment>
+              );
+            }
+            
+            if (hasFailed) {
+              return (
+                <React.Fragment key={filename}>
+                  <div 
+                    className="png-page-error"
+                    style={{
+                      minHeight: '100vh',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: '#fee',
+                      color: '#c33'
+                    }}
+                  >
+                    Failed to load page {index + 1}
+                  </div>
+                  {index < pngMode.pngFiles.length - 1 && (
+                    <div style={{
+                      width: '100%',
+                      height: '3px',
+                      minHeight: '3px',
+                      backgroundColor: 'black',
+                      flexShrink: 0,
+                      display: 'block'
+                    }} />
+                  )}
+                </React.Fragment>
+              );
+            }
+            
+            return (
+              <React.Fragment key={filename}>
+                <img
+                  src={`${dockerServerUrl}/png/${filename}?token=${jwtToken}`}
+                  alt={`Page ${index + 1}`}
+                  className="png-page"
+                  onLoad={() => handleImageLoad(index)}
+                  onError={() => handleImageError(index)}
+                />
+                {index < pngMode.pngFiles.length - 1 && (
+                  <div className="png-page-separator" style={{
+                    width: '100%',
+                    height: '3px',
+                    minHeight: '3px',
+                    backgroundColor: 'black',
+                    flexShrink: 0,
+                    display: 'block'
+                  }} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   // Use native viewer for non-iOS devices (faster)
   if (useNativePDFViewer) {
