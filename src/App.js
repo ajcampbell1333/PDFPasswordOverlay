@@ -5,18 +5,19 @@ import AuthenticatedPasswordOverlay from './components/AuthenticatedPasswordOver
 import { deobfuscateUrl } from './utils/urlObfuscator';
 
 function App() {
-  // Simple password constant - you can change this to any string you want
-  const CORRECT_PASSWORD = 'your-password-here'; // Change this to your desired password
+  // Password constant - ONLY used for local PDF mode (serverHostedPDF = false)
+  // When using server-hosted PDFs, password is validated server-side only
+  const CORRECT_PASSWORD = ''; // Password validated server-side only (not stored client-side) // Password validated server-side only (not stored client-side) // Password validated server-side only (not stored client-side) // Password validated server-side only (not stored client-side) // Password validated server-side only (not stored client-side) // Change this to your desired password (local mode only)
   
   // Production subdirectory - change this if you deploy to a different subdirectory
-  const productionSubdirectory = 'your-subdirectory'; // Change this to your subdirectory name
+  const productionSubdirectory = 'gigxr'; // Change this to your subdirectory name
   
   // Server configuration - set to true to use Docker server, false for local files
   const serverHostedPDF = true; // Change this to false for local PDF files
   
   // Docker server configuration
-  const DOCKER_SERVER_URL = 'https://your-cloud-run-service-url.run.app'; // Change this to your Docker server URL
-  const PDF_FILENAME = 'your-document.pdf'; // Change this to your PDF filename
+  const DOCKER_SERVER_URL = 'https://cover-letter-server-997121785405.us-west2.run.app'; // Change this to your Docker server URL
+  const PDF_FILENAME = 'aj-campbell-gigxr-cover-letter-and-cv.pdf'; // Change this to your PDF filename
   
   // Obfuscated PDF URL - change this to your actual obfuscated PDF file URL
   // To generate a new obfuscated URL, use: node scripts/generateObfuscatedUrl.js "your-pdf-filename.pdf"

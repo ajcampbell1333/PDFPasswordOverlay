@@ -15,62 +15,64 @@ function AuthenticatedPasswordOverlay({ correctPassword, serverHostedPDF, docker
   const passwordInputRef = useRef(null);
 
   const handlePasswordSubmit = async () => {
-    if (password === correctPassword) {
+    // If using server-hosted PDF, authenticate with server (no client-side password check)
+    if (serverHostedPDF && dockerServerUrl) {
       setError('');
       setIsAnimating(true);
       
-      // If using server-hosted PDF, authenticate with Docker server first
-      if (serverHostedPDF && dockerServerUrl) {
-        try {
-          const response = await fetch(`${dockerServerUrl}/auth`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-              password: password,
-              isIOS: isIOS(),
-              pdfFilename: pdfFilename
-            }),
-          });
+      try {
+        const response = await fetch(`${dockerServerUrl}/auth`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            password: password,
+            isIOS: isIOS(),
+            pdfFilename: pdfFilename
+          }),
+        });
 
-          if (response.ok) {
-            const data = await response.json();
-            onTokenReceived(data.token);
-            
-            // Check if server wants us to use PNG mode
-            if (data.usePngMode && data.pngFiles) {
-              onPngModeReceived(data);
-            }
-            
-            // Wait for animation to complete before setting authenticated
-            setTimeout(() => {
-              setIsAuthenticated(true);
-              setIsAnimating(false);
-            }, 500);
-          } else {
-            setError('Authentication failed. Please try again.');
-            setPassword('');
-            setIsAnimating(false);
-            passwordInputRef.current?.focus();
+        if (response.ok) {
+          const data = await response.json();
+          onTokenReceived(data.token);
+          
+          // Check if server wants us to use PNG mode
+          if (data.usePngMode && data.pngFiles) {
+            onPngModeReceived(data);
           }
-        } catch (err) {
-          setError('Unable to connect to server. Please try again.');
+          
+          // Wait for animation to complete before setting authenticated
+          setTimeout(() => {
+            setIsAuthenticated(true);
+            setIsAnimating(false);
+          }, 500);
+        } else {
+          setError('Incorrect password. Please try again.');
           setPassword('');
           setIsAnimating(false);
           passwordInputRef.current?.focus();
         }
-      } else {
-        // Local PDF - no server authentication needed
+      } catch (err) {
+        setError('Unable to connect to server. Please try again.');
+        setPassword('');
+        setIsAnimating(false);
+        passwordInputRef.current?.focus();
+      }
+    } else {
+      // Local PDF mode - client-side password check (for local development/testing)
+      if (password === correctPassword) {
+        setError('');
+        setIsAnimating(true);
         setTimeout(() => {
           setIsAuthenticated(true);
           setIsAnimating(false);
         }, 500);
+      } else {
+        setError('Incorrect password. Please try again.');
+        setPassword('');
+        passwordInputRef.current?.focus();
       }
-    } else {
-      setError('Incorrect password. Please try again.');
-      setPassword('');
-      passwordInputRef.current?.focus();
     }
   };
 
